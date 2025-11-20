@@ -1,8 +1,19 @@
-# 🏦 Sistema Bancário em Python (Com Login e Conta Corrente)
+# 🏦 Sistema Bancário Avançado em Python  
+### Com Login, Múltiplas Contas, Decoradores, Geradores e Iteradores
 
-Este projeto é um **Sistema Bancário completo**, desenvolvido em **Python puro**, utilizando **dicionários**, **funções**, e um modelo simples de **armazenamento em memória**.
+Este projeto é uma evolução completa do sistema bancário desenvolvido durante os desafios da DIO, agora incluindo:
 
-O sistema permite cadastro de clientes, criação de contas, login seguro com senha, depósitos, saques, extrato bancário e múltiplas contas por cliente.
+✔ Decorador de Log (com registro de data/hora)  
+✔ Gerador de Relatórios (usando `yield`)  
+✔ Iterador Personalizado para listar contas  
+✔ Login seguro (CPF + senha)  
+✔ Cadastro de clientes  
+✔ Criação de conta corrente  
+✔ Depósito, saque e extrato  
+✔ Histórico das transações  
+✔ Estrutura organizada e pronta para expandir  
+
+Todo o sistema usa apenas **Python puro**, sem bancos de dados externos, ideal para estudo de lógica, funções, dicionários, decorators, iteradores e geradores.
 
 ---
 
@@ -11,18 +22,44 @@ O sistema permite cadastro de clientes, criação de contas, login seguro com se
 ### 👤 **Cadastro de Cliente**
 - Nome completo  
 - RG  
-- CPF (utilizado como login)  
-- Senha (oculta usando `getpass`)  
-- Endereço  
-- Cidade  
-- Estado  
+- CPF (login único)  
+- Senha (oculta com `getpass`)  
+- Endereço completo (rua, cidade, estado)
 
 ---
 
 ### 🔐 **Login Seguro**
-- Acesso usando **CPF + senha**
-- Senha não aparece na tela durante digitação
+- Autenticação por CPF + senha  
+- Senha não aparece na tela  
+- Cada cliente pode ter várias contas bancárias  
 
+---
+
+### 💳 **Conta Corrente**
+Cada conta possui:
+- Agência: **0001**
+- Número automático
+- Tipo: **Conta Corrente**
+- Saldo
+- Extrato
+- Lista de transações (saques/depositos)
+- Limite de saque
+- Limite diário de saques
+
+---
+
+### 💰 **Operações Bancárias**
+- **Depósito**  
+- **Saque** (com validações e limite)  
+- **Extrato bancário**  
+
+Todas as transações são registradas dentro da conta.
+
+---
+
+## 🧾 Decorador de Log (Decorator)
+
+Todas as funções de transações (depósito, saque, criação de conta) recebem automaticamente um log no console:
 ---
 
 ### 💳 **Conta Corrente**
