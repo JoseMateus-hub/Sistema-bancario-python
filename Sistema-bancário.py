@@ -1,14 +1,59 @@
 import itertools
 import getpass
+from datetime import datetime
 
 clientes = []
 contas = []
 gerador_id = itertools.count(1)
 
 
-# ===========================
+# ==============================
+# DECORADOR DE LOG
+# ==============================
+def log_transacao(func):
+    def wrapper(*args, **kwargs):
+        resultado = func(*args, **kwargs)
+        data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        print(f"[LOG] {data_hora} → Transação: {func.__name__}")
+        return resultado
+    return wrapper
+
+
+# ==============================
+# GERADOR DE RELATÓRIOS
+# ==============================
+def gerador_transacoes(conta, tipo=None):
+    for transacao, valor in conta["transacoes"]:
+        if tipo is None or transacao == tipo:
+            yield transacao, valor
+
+
+# ==============================
+# ITERADOR PERSONALIZADO
+# ==============================
+class ContaIterador:
+    def __init__(self, contas):
+        self.contas = contas
+        self.index = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index >= len(self.contas):
+            raise StopIteration
+        conta = self.contas[self.index]
+        self.index += 1
+        return {
+            "numero": conta["numero_conta"],
+            "agencia": conta["agencia"],
+            "saldo": conta["saldo"]
+        }
+
+
+# ==============================
 # CLIENTE
-# ===========================
+# ==============================
 def cadastrar_cliente():
     print("\n====== CADASTRO DE CLIENTE ======")
     nome = input("Nome completo: ")
@@ -48,9 +93,9 @@ def buscar_cliente_por_cpf(cpf):
     return None
 
 
-# ===========================
+# ==============================
 # LOGIN
-# ===========================
+# ==============================
 def login():
     print("\n====== LOGIN ======")
     cpf = input("CPF: ")
@@ -70,9 +115,10 @@ def login():
     return cliente
 
 
-# ===========================
+# ==============================
 # CONTA
-# ===========================
+# ==============================
+@log_transacao
 def criar_conta(cliente):
     print("\n====== CRIAÇÃO DE CONTA ======")
 
@@ -83,6 +129,7 @@ def criar_conta(cliente):
         "tipo": "Conta Corrente",
         "saldo": 0,
         "extrato": "",
+        "transacoes": [],
         "limite": 500,
         "saques_realizados": 0,
         "LIMITE_SAQUES": 3
@@ -103,18 +150,21 @@ def selecionar_conta(cliente):
     return None
 
 
-# ===========================
-# OPERAÇÕES BANCÁRIAS
-# ===========================
+# ==============================
+# OPERAÇÕES
+# ==============================
+@log_transacao
 def depositar(conta, valor):
     if valor > 0:
         conta["saldo"] += valor
         conta["extrato"] += f"Depósito: R$ {valor:.2f}\n"
+        conta["transacoes"].append(("deposito", valor))
         print("Depósito realizado!")
     else:
         print("Valor inválido.")
 
 
+@log_transacao
 def sacar(conta, valor):
     excedeu_saldo = valor > conta["saldo"]
     excedeu_limite = valor > conta["limite"]
@@ -129,6 +179,7 @@ def sacar(conta, valor):
     elif valor > 0:
         conta["saldo"] -= valor
         conta["extrato"] += f"Saque: R$ {valor:.2f}\n"
+        conta["transacoes"].append(("saque", valor))
         conta["saques_realizados"] += 1
         print("Saque realizado!")
     else:
@@ -142,9 +193,9 @@ def extrato(conta):
     print("======================")
 
 
-# ===========================
-# MENU PRINCIPAL
-# ===========================
+# ==============================
+# MENU
+# ==============================
 def main():
     conta_logada = None
 
@@ -152,6 +203,7 @@ def main():
 ====== MENU PRINCIPAL ======
 [1] Login
 [2] Cadastrar Cliente
+[3] Relatório (todas as contas)
 [q] Sair
 => """
 
@@ -161,7 +213,8 @@ def main():
 [2] Sacar
 [3] Extrato
 [4] Criar Nova Conta
-[5] Trocar Usuário
+[5] Transações (gerador)
+[6] Trocar Usuário
 [q] Logout
 => """
 
@@ -174,14 +227,18 @@ def main():
                 if cliente:
                     conta_logada = selecionar_conta(cliente)
                     if not conta_logada:
-                        print("\nNenhuma conta encontrada. Criando primeira conta:")
                         conta_logada = criar_conta(cliente)
 
             elif opcao == "2":
                 cadastrar_cliente()
 
+            elif opcao == "3":
+                print("\n====== TODAS AS CONTAS ======")
+                for info in ContaIterador(contas):
+                    print(info)
+
             elif opcao == "q":
-                print("Saindo do sistema.")
+                print("Saindo...")
                 break
 
             else:
@@ -191,12 +248,10 @@ def main():
             opcao = input(menu_conta)
 
             if opcao == "1":
-                valor = float(input("Valor do depósito: "))
-                depositar(conta_logada, valor)
+                depositar(conta_logada, float(input("Valor: ")))
 
             elif opcao == "2":
-                valor = float(input("Valor do saque: "))
-                sacar(conta_logada, valor)
+                sacar(conta_logada, float(input("Valor: ")))
 
             elif opcao == "3":
                 extrato(conta_logada)
@@ -207,10 +262,15 @@ def main():
                 conta_logada = criar_conta(cliente)
 
             elif opcao == "5":
-                conta_logada = None
+                tipo = input("Tipo (deposito/saque ou Enter para todos): ").strip() or None
+                print("\n===== TRANSAÇÕES =====")
+                for t, v in gerador_transacoes(conta_logada, tipo):
+                    print(f"{t.upper()} → R$ {v}")
 
             elif opcao == "q":
-                print("Logout realizado.")
+                conta_logada = None
+
+            elif opcao == "6":
                 conta_logada = None
 
             else:
